@@ -1,0 +1,42 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+  --font-display: "Courier New";
+  --font-sans: Inter, ui-sans-serif, system-ui, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    linear-gradient(135deg, rgba(246, 217, 95, 0.08) 0 12px, transparent 12px 24px),
+    radial-gradient(circle at 20% 0%, rgba(121, 214, 149, 0.16), transparent 30rem),
+    #16181d;
+  color: #f4ead5;
+  font-family: var(--font-sans);
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+.pixel-border {
+  border: 2px solid #16181d;
+  box-shadow: 0 4px 0 rgba(8, 12, 16, 0.45);
+}
+
+.card-back {
+  background:
+    linear-gradient(45deg, rgba(246, 217, 95, 0.25) 25%, transparent 25% 50%, rgba(246, 217, 95, 0.25) 50% 75%, transparent 75%),
+    #b63f35;
+  background-size: 18px 18px;
+}
