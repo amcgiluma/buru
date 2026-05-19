@@ -86,14 +86,14 @@ export function getNextHandSize(handIndex: number): number {
 
 export function validateBid(input: BidValidationInput): ValidationResult {
   if (!Number.isInteger(input.bid) || input.bid < 0 || input.bid > input.handSize) {
-    return { valid: false, reason: "La apuesta debe estar entre 0 y el numero de cartas." };
+    return { valid: false, reason: "Las bazas deben estar entre 0 y el numero de cartas." };
   }
 
   const isLastBidder = input.playerOrder[input.playerOrder.length - 1] === input.playerId;
   const total = Object.values(input.existingBids).reduce((sum, bid) => sum + bid, 0) + input.bid;
 
   if (isLastBidder && total === input.handSize) {
-    return { valid: false, reason: "La ultima apuesta no puede cuadrar el total de bazas." };
+    return { valid: false, reason: "La ultima declaracion no puede cuadrar el total de bazas." };
   }
 
   return { valid: true };
@@ -245,7 +245,7 @@ export function placeBid(state: GameState, playerId: string, bid: number): GameS
     playerId,
   });
 
-  if (state.phase !== "bidding") throw new Error("La sala no esta en fase de apuestas.");
+  if (state.phase !== "bidding") throw new Error("La sala no esta en fase de bazas.");
   if (state.currentTurnPlayerId !== playerId) throw new Error("No es tu turno.");
   if (!validation.valid) throw new Error(validation.reason);
 

@@ -290,7 +290,7 @@ function SelectSetting({
   );
 }
 
-function GameTable({
+export function GameTable({
   snapshot,
   playerId,
   onAction,
@@ -326,7 +326,9 @@ function GameTable({
             {winner ? (
               <p className="font-display font-black">Gana {winner.name}</p>
             ) : (
-              <p className="font-display font-black">{currentPlayer?.name ?? "Turno"} juega</p>
+              <p className="font-display font-black">
+                {phase === "bidding" ? `${currentPlayer?.name ?? "Turno"} elige bazas` : `${currentPlayer?.name ?? "Turno"} juega`}
+              </p>
             )}
           </div>
         </div>
@@ -352,7 +354,14 @@ function GameTable({
           <ResultPanel state={state} players={snapshot.players} onNext={() => onAction({ type: "next_hand" })} />
         ) : phase === "bidding" ? (
           <div className="rounded-[8px] border-2 border-ink bg-bone p-3 text-ink shadow-card">
-            <p className="mb-2 font-display font-black">{isMyTurn ? "Apuesta" : "Esperando apuesta"}</p>
+            <p className="mb-2 font-display font-black">
+              {isMyTurn ? "Cuantas bazas crees que ganaras?" : "Esperando bazas"}
+            </p>
+            <div className="mb-3 flex gap-2 overflow-x-auto pb-2">
+              {myHand.map((card) => (
+                <CardView key={card.id} card={card} />
+              ))}
+            </div>
             <div className="flex flex-wrap gap-2">
               {bidOptions.map((bid) => (
                 <button
@@ -417,7 +426,7 @@ function PlayerBadge({
         ) : null}
       </div>
       <div className="mt-2 grid gap-1 text-xs font-black uppercase">
-        <span>Apuesta: {bid ?? "-"}</span>
+        <span>Bazas: {bid ?? "-"}</span>
         <span>Ganadas: {tricksWon}</span>
       </div>
       {player.status === "disconnected" ? <p className="mt-1 text-xs font-black uppercase">desconectado</p> : null}
@@ -471,7 +480,7 @@ function ResultPanel({
           <div key={player.id} className="rounded-[6px] border-2 border-ink bg-white p-2">
             <p className="truncate font-display font-black">{player.name}</p>
             <p className="text-sm">
-              Apuesta: {state.bids[player.id] ?? "-"} / Ganadas: {state.tricksWon[player.id] ?? 0}
+              Bazas: {state.bids[player.id] ?? "-"} / Ganadas: {state.tricksWon[player.id] ?? 0}
             </p>
             <p className="text-sm font-black text-ember">{getBuruStatus(player.lives) || "Sin letras"}</p>
           </div>

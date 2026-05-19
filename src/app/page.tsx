@@ -65,7 +65,7 @@ export default function HomePage() {
           <div>
             <h1 className="font-display text-4xl font-black tracking-normal text-bone sm:text-6xl">BURU</h1>
             <p className="mt-1 max-w-xl text-sm text-bone/74 sm:text-base">
-              Salas privadas, apuestas tensas y cartas con mala memoria.
+              Salas privadas, bazas tensas y cartas con mala memoria.
             </p>
           </div>
           <div className="grid h-16 w-16 place-items-center rounded-[6px] border-2 border-ink bg-gold text-ink shadow-card">

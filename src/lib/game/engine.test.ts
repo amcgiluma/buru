@@ -79,7 +79,7 @@ describe("BURU engine", () => {
     });
 
     expect(result.valid).toBe(false);
-    expect(result.reason).toBe("La ultima apuesta no puede cuadrar el total de bazas.");
+    expect(result.reason).toBe("La ultima declaracion no puede cuadrar el total de bazas.");
   });
 
   it("rejects bids outside the hand size", () => {
