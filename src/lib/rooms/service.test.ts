@@ -149,6 +149,21 @@ describe("room service", () => {
     expect(["hand_result", "game_over"]).toContain(snapshot.room.status);
     expect(snapshot.room.gameState.completedTricks).toHaveLength(1);
   });
+
+  it("rejects bidding actions from eliminated players", async () => {
+    const created = await roomWithThreePlayers();
+    const started = await startRoom(store, created.room.code, created.hostId, { forceHandSize: 1 });
+    const eliminated = started.room.gameState.currentTurnPlayerId;
+    await store.updatePlayer(eliminated, { lives: 0, status: "eliminated" });
+
+    await expect(
+      performRoomAction(store, created.room.code, eliminated, {
+        type: "place_bid",
+        version: started.room.version,
+        bid: 0,
+      }),
+    ).rejects.toThrow("Los jugadores eliminados no pueden actuar.");
+  });
 });
 
 async function roomWithThreePlayers() {

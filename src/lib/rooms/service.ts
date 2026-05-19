@@ -108,7 +108,10 @@ export async function performRoomAction(
   action: RoomAction,
 ): Promise<RoomSnapshot> {
   const snapshot = await requireRoom(store, code);
-  requirePlayer(snapshot, playerId);
+  const player = requirePlayer(snapshot, playerId);
+  if ((action.type === "place_bid" || action.type === "play_card") && (player.status === "eliminated" || player.lives <= 0)) {
+    throw new Error("Los jugadores eliminados no pueden actuar.");
+  }
 
   if (action.version !== snapshot.room.version) {
     throw new Error("Version obsoleta. Refresca el estado de la sala.");

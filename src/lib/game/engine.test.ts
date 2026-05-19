@@ -3,7 +3,7 @@ import {
   buildDeck,
   createInitialGameState,
   dealHand,
-  getLifePhrase,
+  getBuruStatus,
   getNextHandSize,
   hidePrivateState,
   resolveHand,
@@ -29,6 +29,36 @@ describe("BURU engine", () => {
     expect(buildDeck("french")).toHaveLength(52);
     expect(new Set(buildDeck("spanish").map((card) => card.id)).size).toBe(40);
     expect(new Set(buildDeck("french").map((card) => card.id)).size).toBe(52);
+  });
+
+  it("creates exactly four cards per rank in each deck", () => {
+    expect(countByRank(buildDeck("spanish"))).toEqual({
+      "1": 4,
+      "12": 4,
+      "11": 4,
+      "10": 4,
+      "7": 4,
+      "6": 4,
+      "5": 4,
+      "4": 4,
+      "3": 4,
+      "2": 4,
+    });
+    expect(countByRank(buildDeck("french"))).toEqual({
+      A: 4,
+      K: 4,
+      Q: 4,
+      J: 4,
+      "10": 4,
+      "9": 4,
+      "8": 4,
+      "7": 4,
+      "6": 4,
+      "5": 4,
+      "4": 4,
+      "3": 4,
+      "2": 4,
+    });
   });
 
   it("deals hands without duplicate cards", () => {
@@ -101,7 +131,7 @@ describe("BURU engine", () => {
     expect(winner.playerId).toBe("p2");
   });
 
-  it("hides the owner card in one-card rounds but shows it to others", () => {
+  it("shows the owner cards while bidding, including one-card rounds", () => {
     const state = createInitialGameState(players, {
       deckType: "spanish",
       lifeMode: "normal",
@@ -118,13 +148,13 @@ describe("BURU engine", () => {
     };
 
     const hiddenForOwner = hidePrivateState(oneCardState, "p1");
-    const visibleForOther = hidePrivateState(oneCardState, "p2");
+    const hiddenForOther = hidePrivateState(oneCardState, "p2");
 
-    expect(hiddenForOwner.hands.p1[0].hidden).toBe(true);
-    expect(visibleForOther.hands.p1[0].rank).toBe("1");
+    expect(hiddenForOwner.hands.p1[0].rank).toBe("1");
+    expect(hiddenForOther.hands.p1[0].hidden).toBe(true);
   });
 
-  it("keeps the owner card hidden during one-card play", () => {
+  it("shows the owner card during one-card play", () => {
     const state = createInitialGameState(players, {
       deckType: "spanish",
       lifeMode: "normal",
@@ -140,8 +170,16 @@ describe("BURU engine", () => {
       hands: { p1: [card("spanish", "oros", "1")], p2: [card("spanish", "copas", "2")], p3: [] },
     };
 
-    expect(hidePrivateState(oneCardState, "p1").hands.p1[0].hidden).toBe(true);
-    expect(hidePrivateState(oneCardState, "p2").hands.p1[0].rank).toBe("1");
+    expect(hidePrivateState(oneCardState, "p1").hands.p1[0].rank).toBe("1");
+    expect(hidePrivateState(oneCardState, "p2").hands.p1[0].hidden).toBe(true);
+  });
+
+  it("maps lives to the persistent BURU status", () => {
+    expect(getBuruStatus(4)).toBe("");
+    expect(getBuruStatus(3)).toBe("B");
+    expect(getBuruStatus(2)).toBe("BU");
+    expect(getBuruStatus(1)).toBe("BUR");
+    expect(getBuruStatus(0)).toBe("BURU");
   });
 
   it("resolves normal life loss and phrases", () => {
@@ -149,7 +187,7 @@ describe("BURU engine", () => {
 
     expect(result.players.find((player) => player.id === "p1")?.lives).toBe(4);
     expect(result.players.find((player) => player.id === "p2")?.lives).toBe(3);
-    expect(result.losses.p2.phrase).toBe("vas b");
+    expect(result.losses.p2.phrase).toBe("B");
   });
 
   it("resolves extreme life loss and elimination", () => {
@@ -157,8 +195,7 @@ describe("BURU engine", () => {
 
     expect(result.players.find((player) => player.id === "p1")?.lives).toBe(0);
     expect(result.players.find((player) => player.id === "p1")?.status).toBe("eliminated");
-    expect(result.losses.p1.phrase).toBe("vas buru");
-    expect(getLifePhrase(3)).toBe("vas bur");
+    expect(result.losses.p1.phrase).toBe("BURU");
   });
 
   it("detects the final winner when one player remains alive", () => {
@@ -182,4 +219,11 @@ function card(deckType: "spanish" | "french", suit: string, rank: string): Card 
     label: rank,
     value: rank === "A" || rank === "1" ? 14 : Number(rank) || 13,
   };
+}
+
+function countByRank(deck: Card[]): Record<string, number> {
+  return deck.reduce<Record<string, number>>((counts, current) => {
+    counts[current.rank] = (counts[current.rank] ?? 0) + 1;
+    return counts;
+  }, {});
 }

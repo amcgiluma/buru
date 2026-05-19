@@ -2,8 +2,9 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Copy, Crown, Heart, Loader2, Play, RotateCcw, Swords } from "lucide-react";
+import { Copy, Crown, Loader2, Play, RotateCcw, Swords } from "lucide-react";
 import { createBrowserSupabase } from "@/lib/supabase/client";
+import { getBuruStatus } from "@/lib/game/engine";
 import type { GameState, HiddenCard } from "@/lib/game/types";
 import type { PlayerRecord, RoomSnapshot } from "@/lib/rooms/types";
 import { cn } from "@/lib/utils";
@@ -308,17 +309,11 @@ function GameTable({
   const bidOptions = useMemo(() => Array.from({ length: state.handSize + 1 }, (_, value) => value), [state.handSize]);
 
   return (
-    <section className="grid flex-1 gap-3 lg:grid-cols-[260px_1fr]">
-      <aside className="grid content-start gap-2 rounded-[8px] border-2 border-ink bg-bone p-3 text-ink shadow-card">
-        {snapshot.players.map((player) => (
-          <PlayerBadge key={player.id} player={player} state={state} active={state.currentTurnPlayerId === player.id} />
-        ))}
-      </aside>
-
-      <div className="flex min-h-[620px] flex-col gap-3 rounded-[8px] border-2 border-ink bg-felt p-3 shadow-card">
+    <section className="flex flex-1">
+      <div className="flex min-h-[620px] w-full flex-col gap-3 rounded-[8px] border-2 border-ink bg-felt p-3 shadow-card">
         <div className="grid gap-2 sm:grid-cols-3 lg:grid-cols-6">
           {snapshot.players.map((player) => (
-            <PlayerBadge key={`rail-${player.id}`} player={player} state={state} active={state.currentTurnPlayerId === player.id} compact />
+            <PlayerBadge key={player.id} player={player} state={state} active={state.currentTurnPlayerId === player.id} />
           ))}
         </div>
 
@@ -387,11 +382,6 @@ function GameTable({
           </div>
         )}
 
-        {state.handSize === 1 && phase === "bidding" ? (
-          <div className="rounded-[6px] border-2 border-signal bg-signal/20 p-2 text-sm font-bold text-bone">
-            Ronda ciega: tu carta aparece boca abajo para ti y visible para el resto.
-          </div>
-        ) : null}
       </div>
     </section>
   );
@@ -401,38 +391,35 @@ function PlayerBadge({
   player,
   state,
   active,
-  compact,
 }: {
   player: PlayerRecord;
   state: PublicGameState;
   active: boolean;
-  compact?: boolean;
 }) {
+  const buruStatus = getBuruStatus(player.lives);
+  const bid = state.bids?.[player.id];
+  const tricksWon = state.tricksWon?.[player.id] ?? 0;
+
   return (
     <div
       className={cn(
-        "rounded-[6px] border-2 border-ink p-2 shadow-card",
+        "min-w-0 rounded-[6px] border-2 border-ink p-2 shadow-card",
         active ? "bg-gold text-ink" : player.status === "eliminated" ? "bg-ink/20 text-ink/45" : "bg-white text-ink",
         player.status === "disconnected" && "bg-slate-200 text-ink/60",
-        compact && "min-w-0",
       )}
     >
       <div className="flex items-center justify-between gap-2">
         <p className="truncate font-display font-black">{player.name}</p>
-        <span className="flex items-center gap-1 font-display font-black">
-          <Heart size={16} fill="currentColor" />
-          {player.lives}
-        </span>
+        {buruStatus ? (
+          <span className="rounded-[4px] border-2 border-ink bg-ember px-2 py-0.5 font-display text-xs font-black text-bone">
+            {buruStatus}
+          </span>
+        ) : null}
       </div>
-      <div className="mt-2 grid grid-cols-2 gap-1 text-xs font-black uppercase">
-        <span>B {state.bids?.[player.id] ?? "-"}</span>
-        <span>G {state.tricksWon?.[player.id] ?? 0}</span>
+      <div className="mt-2 grid gap-1 text-xs font-black uppercase">
+        <span>Apuesta: {bid ?? "-"}</span>
+        <span>Ganadas: {tricksWon}</span>
       </div>
-      {state.losses?.[player.id]?.phrase ? (
-        <p className="mt-2 rounded-[4px] bg-ember px-2 py-1 text-center text-xs font-black text-bone">
-          {state.losses[player.id].phrase}
-        </p>
-      ) : null}
       {player.status === "disconnected" ? <p className="mt-1 text-xs font-black uppercase">desconectado</p> : null}
     </div>
   );
@@ -484,9 +471,9 @@ function ResultPanel({
           <div key={player.id} className="rounded-[6px] border-2 border-ink bg-white p-2">
             <p className="truncate font-display font-black">{player.name}</p>
             <p className="text-sm">
-              {state.bids[player.id] ?? 0} / {state.tricksWon[player.id] ?? 0}
+              Apuesta: {state.bids[player.id] ?? "-"} / Ganadas: {state.tricksWon[player.id] ?? 0}
             </p>
-            <p className="text-sm font-black text-ember">{state.losses[player.id]?.phrase ?? "clavado"}</p>
+            <p className="text-sm font-black text-ember">{getBuruStatus(player.lives) || "Sin letras"}</p>
           </div>
         ))}
       </div>

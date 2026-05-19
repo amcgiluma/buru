@@ -136,7 +136,7 @@ export function resolveHand(
     if (loss > 0) {
       losses[player.id] = {
         amount: loss,
-        phrase: getLifePhrase(loss),
+        phrase: getBuruStatus(nextLives),
       };
     }
 
@@ -158,11 +158,12 @@ export function resolveHand(
   };
 }
 
-export function getLifePhrase(loss: number): string {
-  if (loss <= 1) return "vas b";
-  if (loss === 2) return "vas bu";
-  if (loss === 3) return "vas bur";
-  return "vas buru";
+export function getBuruStatus(lives: number): string {
+  if (lives <= 0) return "BURU";
+  if (lives === 1) return "BUR";
+  if (lives === 2) return "BU";
+  if (lives === 3) return "B";
+  return "";
 }
 
 export function createInitialGameState(players: GamePlayer[], settings: GameSettings, seed = "buru"): GameState {
@@ -329,10 +330,7 @@ export function hidePrivateState(state: GameState, viewerPlayerId: string): Publ
     Object.entries(state.hands).map(([playerId, hand]) => [
       playerId,
       hand.map((card) => {
-        if (state.handSize === 1 && playerId === viewerPlayerId && (state.phase === "bidding" || state.phase === "playing")) {
-          return { id: card.id, hidden: true };
-        }
-        if (playerId !== viewerPlayerId && state.handSize !== 1) {
+        if (playerId !== viewerPlayerId) {
           return { id: card.id, hidden: true };
         }
         return card;
