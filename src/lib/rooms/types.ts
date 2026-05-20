@@ -68,6 +68,7 @@ export type RoomStore = {
 export type RoomAction =
   | { type: "place_bid"; version: number; bid: number }
   | { type: "play_card"; version: number; cardId: string }
+  | { type: "continue_trick"; version: number }
   | { type: "next_hand"; version: number }
   | { type: "resolve_trick"; version: number }
   | { type: "leave_room"; version: number };

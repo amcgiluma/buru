@@ -64,33 +64,31 @@ export default function HomePage() {
   }
 
   return (
-    <main className="min-h-screen px-4 py-5 sm:px-6 lg:px-8">
-      <section className="mx-auto flex min-h-[calc(100vh-2.5rem)] max-w-6xl flex-col justify-between gap-6 rounded-[8px] border-2 border-ink bg-petrol/88 p-4 shadow-pixel sm:p-6">
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <h1 className="font-display text-4xl font-black tracking-normal text-bone sm:text-6xl">BURU</h1>
-            <p className="mt-1 max-w-xl text-sm text-bone/74 sm:text-base">
-              Salas privadas, bazas tensas y cartas con mala memoria.
-            </p>
-          </div>
-          <div className="grid h-16 w-16 place-items-center rounded-[6px] border-2 border-ink bg-gold text-ink shadow-card">
+    <main className="grid min-h-screen px-4 py-5 sm:px-6 lg:px-8">
+      <section className="mx-auto grid min-h-[calc(100vh-2.5rem)] w-full max-w-6xl content-center gap-6 rounded-[8px] border-2 border-ink bg-petrol/92 p-4 shadow-pixel sm:p-6">
+        <div className="mx-auto grid w-full max-w-4xl justify-items-center gap-3 text-center">
+          <div className="grid h-14 w-14 place-items-center rounded-[6px] border-2 border-ink bg-gold text-ink shadow-card sm:h-16 sm:w-16">
             <Sparkles size={30} />
           </div>
+          <h1 className="pixel-title font-display text-6xl font-black text-bone sm:text-8xl">BURU</h1>
+          <p className="max-w-xl text-sm font-semibold text-bone/78 sm:text-base">
+            Salas privadas, apuestas rapidas y bazas que se ven hasta la ultima carta.
+          </p>
         </div>
 
-        <div className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
+        <div className="mx-auto grid w-full max-w-4xl gap-4 lg:grid-cols-2">
           <form onSubmit={create} className="rounded-[8px] border-2 border-ink bg-felt p-4 shadow-card sm:p-5">
             <label className="text-xs font-black uppercase text-signal">Nombre</label>
             <input
               value={name}
               onChange={(event) => setName(event.target.value)}
               maxLength={24}
-              className="mt-2 h-12 w-full rounded-[6px] border-2 border-ink bg-bone px-3 font-display text-lg font-black text-ink outline-none focus:ring-4 focus:ring-gold/45"
+              className="mt-2 h-12 w-full rounded-[6px] border-2 border-ink bg-bone px-3 font-display text-lg font-black text-ink outline-none transition-shadow focus-visible:ring-4 focus-visible:ring-gold/45"
               placeholder="Tu nombre"
             />
             <button
               disabled={!name.trim() || loading !== null}
-              className="mt-4 flex h-12 w-full items-center justify-center gap-2 rounded-[6px] border-2 border-ink bg-mint font-display font-black text-ink shadow-card disabled:cursor-not-allowed disabled:opacity-50"
+              className="mt-4 flex h-12 w-full items-center justify-center gap-2 rounded-[6px] border-2 border-ink bg-mint font-display font-black text-ink shadow-card transition-transform hover:-translate-y-0.5 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-signal"
             >
               <Plus size={20} />
               {loading === "create" ? "Creando..." : "Crear sala"}
@@ -103,12 +101,12 @@ export default function HomePage() {
               value={code}
               onChange={(event) => setCode(event.target.value.toUpperCase())}
               maxLength={5}
-              className="mt-2 h-12 w-full rounded-[6px] border-2 border-ink bg-white px-3 text-center font-display text-2xl font-black uppercase tracking-[0.18em] outline-none focus:ring-4 focus:ring-ember/30"
+              className="mt-2 h-12 w-full rounded-[6px] border-2 border-ink bg-white px-3 text-center font-display text-2xl font-black uppercase tracking-[0.18em] outline-none transition-shadow focus-visible:ring-4 focus-visible:ring-ember/30"
               placeholder="ABCDE"
             />
             <button
               disabled={!name.trim() || code.trim().length < 5 || loading !== null}
-              className="mt-4 flex h-12 w-full items-center justify-center gap-2 rounded-[6px] border-2 border-ink bg-gold font-display font-black text-ink shadow-card disabled:cursor-not-allowed disabled:opacity-50"
+              className="mt-4 flex h-12 w-full items-center justify-center gap-2 rounded-[6px] border-2 border-ink bg-gold font-display font-black text-ink shadow-card transition-transform hover:-translate-y-0.5 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-ember"
             >
               <DoorOpen size={20} />
               {loading === "join" ? "Entrando..." : "Unirse"}
@@ -116,7 +114,11 @@ export default function HomePage() {
           </form>
         </div>
 
-        {error ? <p className="rounded-[6px] border-2 border-ember bg-ember/25 p-3 text-sm text-bone">{error}</p> : null}
+        {error ? (
+          <p className="mx-auto w-full max-w-4xl rounded-[6px] border-2 border-ember bg-ember/25 p-3 text-sm text-bone">
+            {error}
+          </p>
+        ) : null}
       </section>
     </main>
   );

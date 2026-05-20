@@ -310,15 +310,37 @@ export function GameTable({
   const phase = state.phase;
   const currentPlayer = snapshot.players.find((player) => player.id === state.currentTurnPlayerId);
   const winner = state.winnerId ? snapshot.players.find((player) => player.id === state.winnerId) : null;
+  const trickWinnerId = phase === "trick_result" ? state.lastTrickWinnerPlayerId ?? state.leaderPlayerId : undefined;
+  const trickWinner = trickWinnerId ? snapshot.players.find((player) => player.id === trickWinnerId) : null;
+  const trickWinnerBid = trickWinnerId ? state.bids?.[trickWinnerId] : undefined;
+  const trickWinnerWon = trickWinnerId ? state.tricksWon?.[trickWinnerId] ?? 0 : 0;
 
   const bidOptions = useMemo(() => Array.from({ length: state.handSize + 1 }, (_, value) => value), [state.handSize]);
+
+  useEffect(() => {
+    if (phase !== "trick_result" || !trickWinnerId) return;
+
+    playUiSound("trick");
+    if (playerId !== trickWinnerId) return;
+
+    const timer = window.setTimeout(() => {
+      onAction({ type: "continue_trick" }, "advance");
+    }, 3000);
+
+    return () => window.clearTimeout(timer);
+  }, [onAction, phase, playerId, trickWinnerId]);
 
   return (
     <section className="flex flex-1">
       <div className="flex min-h-[620px] w-full flex-col gap-3 rounded-[8px] border-2 border-ink bg-felt p-3 shadow-card">
         <div className="grid gap-2 sm:grid-cols-3 lg:grid-cols-6">
           {snapshot.players.map((player) => (
-            <PlayerBadge key={player.id} player={player} state={state} active={state.currentTurnPlayerId === player.id} />
+            <PlayerBadge
+              key={player.id}
+              player={player}
+              state={state}
+              active={(phase === "trick_result" ? trickWinnerId : state.currentTurnPlayerId) === player.id}
+            />
           ))}
         </div>
 
@@ -330,6 +352,8 @@ export function GameTable({
           <div className="rounded-[6px] border-2 border-ink bg-bone px-3 py-2 text-ink shadow-card">
             {winner ? (
               <p className="font-display font-black">Gana {winner.name}</p>
+            ) : trickWinner ? (
+              <p className="font-display font-black">{trickWinner.name} gana la baza</p>
             ) : (
               <p className="font-display font-black">
                 {phase === "bidding" ? `${currentPlayer?.name ?? "Turno"} elige bazas` : `${currentPlayer?.name ?? "Turno"} juega`}
@@ -355,14 +379,21 @@ export function GameTable({
           </div>
         </div>
 
-        {phase === "hand_result" || phase === "game_over" ? (
+        {phase === "trick_result" ? (
+          <TrickResultPanel
+            winnerName={trickWinner?.name ?? "El jugador"}
+            won={trickWinnerWon}
+            bid={trickWinnerBid}
+            onContinue={() => onAction({ type: "continue_trick" }, "advance")}
+          />
+        ) : phase === "hand_result" || phase === "game_over" ? (
           <ResultPanel state={state} players={snapshot.players} onNext={() => onAction({ type: "next_hand" })} />
         ) : phase === "bidding" ? (
           <div className="rounded-[8px] border-2 border-ink bg-bone p-3 text-ink shadow-card">
             <p className="mb-2 font-display font-black">
               {isMyTurn ? "Cuantas bazas crees que ganaras?" : "Esperando bazas"}
             </p>
-            <div className="mb-3 flex gap-2 overflow-x-auto pb-2">
+            <div className="mb-3 flex gap-2 overflow-x-auto px-1 pb-3 pt-3">
               {myHand.map((card) => (
                 <CardView key={card.id} card={card} />
               ))}
@@ -383,7 +414,7 @@ export function GameTable({
         ) : (
           <div className="rounded-[8px] border-2 border-ink bg-bone p-3 text-ink shadow-card">
             <p className="mb-2 font-display font-black">{isMyTurn ? "Tu carta" : "Esperando turno"}</p>
-            <div className="flex gap-2 overflow-x-auto pb-2">
+            <div className="flex gap-2 overflow-x-auto px-1 pb-3 pt-3">
               {myHand.map((card) => (
                 <CardView
                   key={card.id}
@@ -398,6 +429,41 @@ export function GameTable({
 
       </div>
     </section>
+  );
+}
+
+function TrickResultPanel({
+  winnerName,
+  won,
+  bid,
+  onContinue,
+}: {
+  winnerName: string;
+  won: number;
+  bid?: number;
+  onContinue: () => void;
+}) {
+  return (
+    <div
+      aria-live="polite"
+      className="rounded-[8px] border-2 border-ink bg-gold p-3 text-ink shadow-card"
+    >
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <p className="font-display text-xl font-black">{winnerName} ha ganado la baza</p>
+          <p className="mt-1 text-sm font-black uppercase">
+            Ganadas: {won} / Declaradas: {bid ?? "-"}
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={onContinue}
+          className="h-11 rounded-[6px] border-2 border-ink bg-bone px-3 font-display font-black shadow-card transition-transform hover:-translate-y-0.5 active:translate-y-0 focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-signal"
+        >
+          Continuar
+        </button>
+      </div>
+    </div>
   );
 }
 

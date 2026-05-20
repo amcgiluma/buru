@@ -1,11 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
   buildDeck,
+  continueTrick,
   createInitialGameState,
   dealHand,
   getBuruStatus,
   getNextHandSize,
   hidePrivateState,
+  playCard,
   resolveHand,
   resolveTrick,
   validateBid,
@@ -208,6 +210,42 @@ describe("BURU engine", () => {
 
     expect(result.winnerId).toBe("p3");
   });
+
+  it("pauses with the completed trick visible after the final card is played", () => {
+    const state = playableState({ handSize: 2 });
+
+    const paused = playCard(state, "p3", "spanish-espadas-3");
+
+    expect(paused.phase).toBe("trick_result");
+    expect(paused.currentTrick).toHaveLength(3);
+    expect(paused.completedTricks).toHaveLength(1);
+    expect(paused.lastTrickWinnerPlayerId).toBe("p2");
+    expect(paused.currentTurnPlayerId).toBe("p2");
+    expect(paused.tricksWon.p2).toBe(1);
+  });
+
+  it("continues from a trick result into the next trick led by the winner", () => {
+    const paused = playCard(playableState({ handSize: 2 }), "p3", "spanish-espadas-3");
+
+    const continued = continueTrick(paused);
+
+    expect(continued.phase).toBe("playing");
+    expect(continued.currentTrick).toEqual([]);
+    expect(continued.completedTricks).toHaveLength(1);
+    expect(continued.leaderPlayerId).toBe("p2");
+    expect(continued.currentTurnPlayerId).toBe("p2");
+    expect(continued.lastTrickWinnerPlayerId).toBeUndefined();
+  });
+
+  it("continues from the final trick result into the hand result", () => {
+    const paused = playCard(playableState({ handSize: 1 }), "p3", "spanish-espadas-3");
+
+    const result = continueTrick(paused);
+
+    expect(result.phase).toBe("hand_result");
+    expect(result.currentTrick).toEqual([]);
+    expect(result.losses.p1.phrase).toBe("B");
+  });
 });
 
 function card(deckType: "spanish" | "french", suit: string, rank: string): Card {
@@ -226,4 +264,38 @@ function countByRank(deck: Card[]): Record<string, number> {
     counts[current.rank] = (counts[current.rank] ?? 0) + 1;
     return counts;
   }, {});
+}
+
+function playableState({ handSize }: { handSize: number }) {
+  return {
+    phase: "playing" as const,
+    settings: {
+      deckType: "spanish" as const,
+      lifeMode: "normal" as const,
+      tieRule: "diego" as const,
+      initialLives: 4,
+      minPlayers: 3,
+      maxPlayers: 6,
+    },
+    players,
+    dealerSeat: 0,
+    leaderPlayerId: "p1",
+    currentTurnPlayerId: "p3",
+    handIndex: 0,
+    handSize,
+    deck: [],
+    hands: {
+      p1: [],
+      p2: [],
+      p3: [card("spanish", "espadas", "3")],
+    },
+    bids: { p1: 1, p2: 1, p3: 0 },
+    tricksWon: { p1: 0, p2: 0, p3: 0 },
+    currentTrick: [
+      { playerId: "p1", card: card("spanish", "oros", "2") },
+      { playerId: "p2", card: card("spanish", "copas", "12") },
+    ],
+    completedTricks: [],
+    losses: {},
+  };
 }

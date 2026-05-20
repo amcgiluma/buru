@@ -193,6 +193,7 @@ export function createInitialGameState(players: GamePlayer[], settings: GameSett
     currentTrick: [],
     completedTricks: [],
     losses: {},
+    lastTrickWinnerPlayerId: undefined,
   };
 }
 
@@ -219,6 +220,7 @@ export function startNextHand(state: GameState, seed = Date.now().toString()): G
     currentTrick: [],
     completedTricks: [],
     losses: {},
+    lastTrickWinnerPlayerId: undefined,
     winnerId: undefined,
   };
 }
@@ -294,34 +296,49 @@ export function playCard(state: GameState, playerId: string, cardId: string): Ga
     [winner.playerId]: (state.tricksWon[winner.playerId] ?? 0) + 1,
   };
   const completedTricks = [...state.completedTricks, currentTrick];
-  const handComplete = completedTricks.length >= state.handSize;
+
+  return {
+    ...state,
+    phase: "trick_result",
+    hands,
+    currentTrick,
+    completedTricks,
+    tricksWon,
+    leaderPlayerId: winner.playerId,
+    currentTurnPlayerId: winner.playerId,
+    lastTrickWinnerPlayerId: winner.playerId,
+  };
+}
+
+export function continueTrick(state: GameState): GameState {
+  if (state.phase !== "trick_result") throw new Error("La sala no esta mostrando el resultado de una baza.");
+
+  const winnerPlayerId = state.lastTrickWinnerPlayerId ?? state.leaderPlayerId;
+  const handComplete = state.completedTricks.length >= state.handSize;
 
   if (!handComplete) {
     return {
       ...state,
-      hands,
+      phase: "playing",
       currentTrick: [],
-      completedTricks,
-      tricksWon,
-      leaderPlayerId: winner.playerId,
-      currentTurnPlayerId: winner.playerId,
+      leaderPlayerId: winnerPlayerId,
+      currentTurnPlayerId: winnerPlayerId,
+      lastTrickWinnerPlayerId: undefined,
     };
   }
 
-  const result = resolveHand(state.players, state.bids, tricksWon, state.settings.lifeMode);
+  const result = resolveHand(state.players, state.bids, state.tricksWon, state.settings.lifeMode);
 
   return {
     ...state,
     phase: result.winnerId ? "game_over" : "hand_result",
     players: result.players,
-    hands,
     currentTrick: [],
-    completedTricks,
-    tricksWon,
     losses: result.losses,
     winnerId: result.winnerId,
-    leaderPlayerId: winner.playerId,
-    currentTurnPlayerId: winner.playerId,
+    leaderPlayerId: winnerPlayerId,
+    currentTurnPlayerId: winnerPlayerId,
+    lastTrickWinnerPlayerId: undefined,
   };
 }
 

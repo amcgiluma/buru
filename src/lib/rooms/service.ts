@@ -1,6 +1,6 @@
 import { nanoid } from "nanoid";
 import { createHash, randomBytes } from "node:crypto";
-import { createInitialGameState, placeBid, playCard, startNextHand } from "@/lib/game/engine";
+import { continueTrick, createInitialGameState, placeBid, playCard, startNextHand } from "@/lib/game/engine";
 import type { GameSettings, RoomStatus } from "@/lib/game/types";
 import type { GamePlayer } from "@/lib/game/types";
 import type { PlayerRecord, RoomAction, RoomSnapshot, RoomStore } from "./types";
@@ -127,6 +127,10 @@ export async function performRoomAction(
     nextState = playCard(nextState, playerId, action.cardId);
   }
 
+  if (action.type === "continue_trick") {
+    nextState = continueTrick(nextState);
+  }
+
   if (action.type === "next_hand") {
     if (nextState.phase !== "hand_result") throw new Error("La mano actual no ha terminado.");
     nextState = startNextHand(nextState, `${snapshot.room.code}-${snapshot.room.version}`);
@@ -221,6 +225,7 @@ function requirePlayer(snapshot: RoomSnapshot, playerId: string): PlayerRecord {
 
 function statusFromPhase(phase: RoomSnapshot["room"]["gameState"]["phase"]): RoomStatus {
   if (phase === "bidding") return "bidding";
+  if (phase === "trick_result") return "playing";
   if (phase === "playing") return "playing";
   if (phase === "game_over") return "game_over";
   return "hand_result";
@@ -238,5 +243,6 @@ async function persistPlayers(store: RoomStore, previous: PlayerRecord[], next: 
 function actionPayload(action: RoomAction): Record<string, unknown> {
   if (action.type === "place_bid") return { bid: action.bid };
   if (action.type === "play_card") return { cardId: action.cardId };
+  if (action.type === "continue_trick") return { continued: true };
   return {};
 }

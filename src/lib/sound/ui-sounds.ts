@@ -1,4 +1,4 @@
-export type UiSound = "tap" | "confirm" | "card" | "select" | "error";
+export type UiSound = "tap" | "confirm" | "card" | "select" | "error" | "trick" | "advance";
 
 type SoundStep = {
   frequency: number;
@@ -20,6 +20,15 @@ const SOUND_PATTERNS: Record<UiSound, SoundStep[]> = {
   card: [
     { frequency: 760, duration: 0.035, delay: 0, type: "triangle" },
     { frequency: 520, duration: 0.055, delay: 0.025, type: "sine" },
+  ],
+  trick: [
+    { frequency: 520, duration: 0.045, delay: 0, type: "square" },
+    { frequency: 700, duration: 0.055, delay: 0.04, type: "triangle" },
+    { frequency: 880, duration: 0.07, delay: 0.095, type: "triangle" },
+  ],
+  advance: [
+    { frequency: 420, duration: 0.04, delay: 0, type: "sine" },
+    { frequency: 300, duration: 0.05, delay: 0.035, type: "triangle" },
   ],
   error: [
     { frequency: 180, duration: 0.055, delay: 0, type: "sawtooth" },

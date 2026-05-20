@@ -34,6 +34,16 @@ select {
   box-shadow: 0 4px 0 rgba(8, 12, 16, 0.45);
 }
 
+.pixel-title {
+  letter-spacing: 0;
+  line-height: 0.86;
+  text-shadow:
+    0 4px 0 #16181d,
+    4px 0 0 #16181d,
+    4px 4px 0 #16181d,
+    8px 8px 0 rgba(246, 217, 95, 0.32);
+}
+
 .card-back {
   background:
     linear-gradient(45deg, rgba(246, 217, 95, 0.25) 25%, transparent 25% 50%, rgba(246, 217, 95, 0.25) 50% 75%, transparent 75%),

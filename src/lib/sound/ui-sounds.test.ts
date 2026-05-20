@@ -8,6 +8,8 @@ describe("ui sounds", () => {
     ]);
     expect(getUiSoundPattern("confirm").length).toBeGreaterThan(1);
     expect(getUiSoundPattern("card")[0].frequency).toBeGreaterThan(getUiSoundPattern("tap")[0].frequency);
+    expect(getUiSoundPattern("trick").length).toBeGreaterThan(1);
+    expect(getUiSoundPattern("advance")[0].frequency).toBeLessThan(getUiSoundPattern("confirm")[1].frequency);
   });
 
   it("returns copies so callers cannot mutate the shared patterns", () => {

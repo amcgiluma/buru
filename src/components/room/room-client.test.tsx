@@ -13,6 +13,15 @@ describe("GameTable", () => {
     expect(screen.getByLabelText("7 copas")).toBeInTheDocument();
     expect(screen.getAllByText("Bazas: -").length).toBeGreaterThan(0);
   });
+
+  it("shows the trick winner, their score and the completed trick while paused", () => {
+    render(<GameTable snapshot={trickResultSnapshot()} playerId="p1" onAction={vi.fn()} />);
+
+    expect(screen.getByText("Beto ha ganado la baza")).toBeInTheDocument();
+    expect(screen.getByText("Ganadas: 1 / Declaradas: 1")).toBeInTheDocument();
+    expect(screen.getByLabelText("12 copas")).toBeInTheDocument();
+    expect(screen.getByLabelText("3 espadas")).toBeInTheDocument();
+  });
 });
 
 function biddingSnapshot(): PublicRoomSnapshot {
@@ -58,6 +67,67 @@ function biddingSnapshot(): PublicRoomSnapshot {
       settings: gameState.settings,
       gameState,
       version: 1,
+      createdAt: "2026-05-20T00:00:00.000Z",
+      updatedAt: "2026-05-20T00:00:00.000Z",
+    },
+    players,
+  };
+}
+
+function trickResultSnapshot(): PublicRoomSnapshot {
+  const players = [
+    player("p1", "Ana", 0, true),
+    player("p2", "Beto", 1, false),
+    player("p3", "Cris", 2, false),
+  ];
+  const gameState: PublicGameState = {
+    phase: "trick_result",
+    settings: {
+      deckType: "spanish",
+      lifeMode: "normal",
+      tieRule: "diego",
+      initialLives: 4,
+      minPlayers: 3,
+      maxPlayers: 6,
+    },
+    players,
+    dealerSeat: 0,
+    leaderPlayerId: "p2",
+    currentTurnPlayerId: "p2",
+    handIndex: 0,
+    handSize: 2,
+    deck: [],
+    hands: {
+      p1: [card("bastos", "5", 4)],
+      p2: [{ id: "hidden-p2-1", hidden: true }],
+      p3: [{ id: "hidden-p3-1", hidden: true }],
+    },
+    bids: { p1: 0, p2: 1, p3: 0 },
+    tricksWon: { p1: 0, p2: 1, p3: 0 },
+    currentTrick: [
+      { playerId: "p1", card: card("oros", "2", 1) },
+      { playerId: "p2", card: card("copas", "12", 9) },
+      { playerId: "p3", card: card("espadas", "3", 2) },
+    ],
+    completedTricks: [
+      [
+        { playerId: "p1", card: card("oros", "2", 1) },
+        { playerId: "p2", card: card("copas", "12", 9) },
+        { playerId: "p3", card: card("espadas", "3", 2) },
+      ],
+    ],
+    losses: {},
+    lastTrickWinnerPlayerId: "p2",
+  };
+
+  return {
+    room: {
+      id: "room-1",
+      code: "ABCDE",
+      status: "playing",
+      settings: gameState.settings,
+      gameState,
+      version: 4,
       createdAt: "2026-05-20T00:00:00.000Z",
       updatedAt: "2026-05-20T00:00:00.000Z",
     },

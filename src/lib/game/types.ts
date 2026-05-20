@@ -3,7 +3,7 @@ export type LifeMode = "normal" | "extreme";
 export type TieRule = "diego" | "lete";
 export type PlayerStatus = "active" | "eliminated" | "disconnected";
 export type RoomStatus = "lobby" | "bidding" | "playing" | "hand_result" | "game_over";
-export type GamePhase = "bidding" | "playing" | "hand_result" | "game_over";
+export type GamePhase = "bidding" | "playing" | "trick_result" | "hand_result" | "game_over";
 
 export type GameSettings = {
   deckType: DeckType;
@@ -58,6 +58,7 @@ export type GameState = {
   currentTrick: PlayedCard[];
   completedTricks: PlayedCard[][];
   losses: Record<string, LifeLoss>;
+  lastTrickWinnerPlayerId?: string;
   winnerId?: string;
 };
 

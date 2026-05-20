@@ -146,8 +146,17 @@ describe("room service", () => {
       });
     }
 
-    expect(["hand_result", "game_over"]).toContain(snapshot.room.status);
+    expect(snapshot.room.status).toBe("playing");
+    expect(snapshot.room.gameState.phase).toBe("trick_result");
     expect(snapshot.room.gameState.completedTricks).toHaveLength(1);
+
+    snapshot = await performRoomAction(store, created.room.code, snapshot.room.gameState.currentTurnPlayerId, {
+      type: "continue_trick",
+      version: snapshot.room.version,
+    });
+
+    expect(["hand_result", "game_over"]).toContain(snapshot.room.status);
+    expect(snapshot.room.gameState.currentTrick).toEqual([]);
   });
 
   it("rejects bidding actions from eliminated players", async () => {
