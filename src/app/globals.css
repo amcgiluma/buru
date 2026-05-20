@@ -36,12 +36,10 @@ select {
 
 .pixel-title {
   letter-spacing: 0;
-  line-height: 0.86;
+  line-height: 1.05;
   text-shadow:
     0 4px 0 #16181d,
-    4px 0 0 #16181d,
-    4px 4px 0 #16181d,
-    8px 8px 0 rgba(246, 217, 95, 0.32);
+    4px 4px 0 rgba(246, 217, 95, 0.28);
 }
 
 .card-back {

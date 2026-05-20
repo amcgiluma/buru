@@ -93,7 +93,10 @@ export function validateBid(input: BidValidationInput): ValidationResult {
   const total = Object.values(input.existingBids).reduce((sum, bid) => sum + bid, 0) + input.bid;
 
   if (isLastBidder && total === input.handSize) {
-    return { valid: false, reason: "La ultima declaracion no puede cuadrar el total de bazas." };
+    return {
+      valid: false,
+      reason: `No puedes declarar ${input.bid} bazas: eres el ultimo en declarar y la suma seria exactamente ${input.handSize}, igual que las cartas de la mano.`,
+    };
   }
 
   return { valid: true };

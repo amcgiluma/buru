@@ -2,8 +2,15 @@
 
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Press_Start_2P } from "next/font/google";
 import { DoorOpen, Plus, Sparkles } from "lucide-react";
 import { playUiSound } from "@/lib/sound/ui-sounds";
+
+const pixelFont = Press_Start_2P({
+  subsets: ["latin"],
+  weight: "400",
+  display: "swap",
+});
 
 export default function HomePage() {
   const router = useRouter();
@@ -70,9 +77,9 @@ export default function HomePage() {
           <div className="grid h-14 w-14 place-items-center rounded-[6px] border-2 border-ink bg-gold text-ink shadow-card sm:h-16 sm:w-16">
             <Sparkles size={30} />
           </div>
-          <h1 className="pixel-title font-display text-6xl font-black text-bone sm:text-8xl">BURU</h1>
+          <h1 className={`${pixelFont.className} pixel-title text-4xl text-bone sm:text-5xl md:text-6xl`}>BURU</h1>
           <p className="max-w-xl text-sm font-semibold text-bone/78 sm:text-base">
-            Salas privadas, apuestas rapidas y bazas que se ven hasta la ultima carta.
+            Aplasta a tus enemigos, no tengas piedad
           </p>
         </div>
 

@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { GameTable } from "./room-client";
 import type { Card, PublicGameState } from "@/lib/game/types";
@@ -21,6 +21,20 @@ describe("GameTable", () => {
     expect(screen.getByText("Ganadas: 1 / Declaradas: 1")).toBeInTheDocument();
     expect(screen.getByLabelText("12 copas")).toBeInTheDocument();
     expect(screen.getByLabelText("3 espadas")).toBeInTheDocument();
+  });
+
+  it("warns the last bidder and blocks the bid that would match the hand size", () => {
+    const onAction = vi.fn();
+    render(<GameTable snapshot={lastBidderSnapshot()} playerId="p3" onAction={onAction} />);
+
+    expect(screen.getByText("No puedes elegir 2 bazas")).toBeInTheDocument();
+    expect(screen.getByText("Eres el ultimo en declarar y la suma no puede ser exactamente 5.")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "2" }));
+    expect(onAction).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("button", { name: "1" }));
+    expect(onAction).toHaveBeenCalledWith({ type: "place_bid", bid: 1 }, "select");
   });
 });
 
@@ -128,6 +142,56 @@ function trickResultSnapshot(): PublicRoomSnapshot {
       settings: gameState.settings,
       gameState,
       version: 4,
+      createdAt: "2026-05-20T00:00:00.000Z",
+      updatedAt: "2026-05-20T00:00:00.000Z",
+    },
+    players,
+  };
+}
+
+function lastBidderSnapshot(): PublicRoomSnapshot {
+  const players = [
+    player("p1", "Ana", 0, true),
+    player("p2", "Beto", 1, false),
+    player("p3", "Cris", 2, false),
+  ];
+  const gameState: PublicGameState = {
+    phase: "bidding",
+    settings: {
+      deckType: "spanish",
+      lifeMode: "normal",
+      tieRule: "diego",
+      initialLives: 4,
+      minPlayers: 3,
+      maxPlayers: 6,
+    },
+    players,
+    dealerSeat: 0,
+    leaderPlayerId: "p1",
+    currentTurnPlayerId: "p3",
+    handIndex: 0,
+    handSize: 5,
+    deck: [],
+    hands: {
+      p1: [{ id: "hidden-p1-1", hidden: true }],
+      p2: [{ id: "hidden-p2-1", hidden: true }],
+      p3: [card("oros", "12", 9), card("copas", "7", 6)],
+    },
+    bids: { p1: 2, p2: 1 },
+    tricksWon: { p1: 0, p2: 0, p3: 0 },
+    currentTrick: [],
+    completedTricks: [],
+    losses: {},
+  };
+
+  return {
+    room: {
+      id: "room-1",
+      code: "ABCDE",
+      status: "bidding",
+      settings: gameState.settings,
+      gameState,
+      version: 3,
       createdAt: "2026-05-20T00:00:00.000Z",
       updatedAt: "2026-05-20T00:00:00.000Z",
     },

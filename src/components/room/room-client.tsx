@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Copy, Crown, Loader2, Play, RotateCcw, Swords } from "lucide-react";
 import { createBrowserSupabase } from "@/lib/supabase/client";
-import { getBuruStatus } from "@/lib/game/engine";
+import { getBuruStatus, getTurnOrder } from "@/lib/game/engine";
 import { playUiSound, type UiSound } from "@/lib/sound/ui-sounds";
 import type { PublicGameState } from "@/lib/game/types";
 import type { PlayerRecord, PublicRoomSnapshot } from "@/lib/rooms/types";
@@ -306,6 +306,7 @@ export function GameTable({
 }) {
   const state = snapshot.room.gameState;
   const myHand = state.hands?.[playerId] ?? [];
+  const [bidWarning, setBidWarning] = useState("");
   const isMyTurn = state.currentTurnPlayerId === playerId;
   const phase = state.phase;
   const currentPlayer = snapshot.players.find((player) => player.id === state.currentTurnPlayerId);
@@ -316,6 +317,8 @@ export function GameTable({
   const trickWinnerWon = trickWinnerId ? state.tricksWon?.[trickWinnerId] ?? 0 : 0;
 
   const bidOptions = useMemo(() => Array.from({ length: state.handSize + 1 }, (_, value) => value), [state.handSize]);
+  const bidBlock = useMemo(() => getForbiddenBid(state, playerId), [playerId, state]);
+  const visibleBidWarning = bidWarning || bidBlock?.message;
 
   useEffect(() => {
     if (phase !== "trick_result" || !trickWinnerId) return;
@@ -393,22 +396,53 @@ export function GameTable({
             <p className="mb-2 font-display font-black">
               {isMyTurn ? "Cuantas bazas crees que ganaras?" : "Esperando bazas"}
             </p>
+            {visibleBidWarning ? (
+              <div
+                aria-live="polite"
+                className="mb-3 rounded-[6px] border-2 border-ember bg-ember/18 p-3 text-ink shadow-card"
+              >
+                <p className="font-display text-lg font-black">No puedes elegir {bidBlock?.bid ?? "esa cantidad"} bazas</p>
+                <p className="mt-1 text-sm font-bold">{visibleBidWarning}</p>
+              </div>
+            ) : null}
             <div className="mb-3 flex gap-2 overflow-x-auto px-1 pb-3 pt-3">
               {myHand.map((card) => (
                 <CardView key={card.id} card={card} />
               ))}
             </div>
             <div className="flex flex-wrap gap-2">
-              {bidOptions.map((bid) => (
-                <button
-                  key={bid}
-                  disabled={!isMyTurn}
-                  onClick={() => onAction({ type: "place_bid", bid }, "select")}
-                  className="h-11 min-w-11 rounded-[6px] border-2 border-ink bg-gold px-3 font-display font-black shadow-card disabled:opacity-45"
-                >
-                  {bid}
-                </button>
-              ))}
+              {bidOptions.map((bid) => {
+                const forbidden = bidBlock?.bid === bid;
+                return (
+                  <button
+                    key={bid}
+                    disabled={!isMyTurn}
+                    onMouseEnter={() => {
+                      if (isMyTurn && !forbidden) playUiSound("select");
+                    }}
+                    onFocus={() => {
+                      if (isMyTurn && !forbidden) playUiSound("select");
+                    }}
+                    onClick={() => {
+                      if (forbidden) {
+                        playUiSound("error");
+                        setBidWarning(bidBlock.message);
+                        return;
+                      }
+                      setBidWarning("");
+                      onAction({ type: "place_bid", bid }, "select");
+                    }}
+                    className={cn(
+                      "h-11 min-w-11 rounded-[6px] border-2 border-ink px-3 font-display font-black shadow-card transition-transform duration-150 focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-signal disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:translate-y-0",
+                      forbidden
+                        ? "bg-ember text-bone ring-4 ring-ember/30 hover:-translate-y-0.5 hover:ring-ember"
+                        : "bg-gold text-ink hover:-translate-y-1 hover:bg-signal hover:ring-4 hover:ring-gold/40 active:translate-y-0",
+                    )}
+                  >
+                    {bid}
+                  </button>
+                );
+              })}
             </div>
           </div>
         ) : (
@@ -430,6 +464,23 @@ export function GameTable({
       </div>
     </section>
   );
+}
+
+function getForbiddenBid(state: PublicGameState, playerId: string) {
+  if (state.phase !== "bidding" || state.currentTurnPlayerId !== playerId) return null;
+
+  const order = getTurnOrder(state.players, state.leaderPlayerId);
+  const isLastBidder = order[order.length - 1] === playerId;
+  if (!isLastBidder) return null;
+
+  const currentTotal = Object.values(state.bids).reduce((sum, bid) => sum + bid, 0);
+  const forbiddenBid = state.handSize - currentTotal;
+  if (forbiddenBid < 0 || forbiddenBid > state.handSize) return null;
+
+  return {
+    bid: forbiddenBid,
+    message: `Eres el ultimo en declarar y la suma no puede ser exactamente ${state.handSize}.`,
+  };
 }
 
 function TrickResultPanel({

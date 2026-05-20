@@ -81,7 +81,9 @@ describe("BURU engine", () => {
     });
 
     expect(result.valid).toBe(false);
-    expect(result.reason).toBe("La ultima declaracion no puede cuadrar el total de bazas.");
+    expect(result.reason).toBe(
+      "No puedes declarar 2 bazas: eres el ultimo en declarar y la suma seria exactamente 5, igual que las cartas de la mano.",
+    );
   });
 
   it("rejects bids outside the hand size", () => {
