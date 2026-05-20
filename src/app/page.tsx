@@ -3,6 +3,7 @@
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { DoorOpen, Plus, Sparkles } from "lucide-react";
+import { playUiSound } from "@/lib/sound/ui-sounds";
 
 export default function HomePage() {
   const router = useRouter();
@@ -13,6 +14,7 @@ export default function HomePage() {
 
   async function create(e: FormEvent) {
     e.preventDefault();
+    playUiSound("confirm");
     setError("");
     setLoading("create");
     try {
@@ -28,6 +30,7 @@ export default function HomePage() {
       localStorage.setItem("buru:name", name);
       router.push(`/rooms/${data.room.code}`);
     } catch (err) {
+      playUiSound("error");
       setError(err instanceof Error ? err.message : "No se pudo crear la sala.");
     } finally {
       setLoading(null);
@@ -36,6 +39,7 @@ export default function HomePage() {
 
   async function join(e: FormEvent) {
     e.preventDefault();
+    playUiSound("confirm");
     setError("");
     setLoading("join");
     try {
@@ -52,6 +56,7 @@ export default function HomePage() {
       localStorage.setItem("buru:name", name);
       router.push(`/rooms/${data.room.code}`);
     } catch (err) {
+      playUiSound("error");
       setError(err instanceof Error ? err.message : "No se pudo entrar.");
     } finally {
       setLoading(null);

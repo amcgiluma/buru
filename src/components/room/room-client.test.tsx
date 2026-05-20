@@ -1,8 +1,8 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { GameTable } from "./room-client";
-import type { Card, GameState } from "@/lib/game/types";
-import type { RoomSnapshot } from "@/lib/rooms/types";
+import type { Card, PublicGameState } from "@/lib/game/types";
+import type { PublicRoomSnapshot } from "@/lib/rooms/types";
 
 describe("GameTable", () => {
   it("shows the player's cards while choosing how many bazas they expect to win", () => {
@@ -15,13 +15,13 @@ describe("GameTable", () => {
   });
 });
 
-function biddingSnapshot(): RoomSnapshot {
+function biddingSnapshot(): PublicRoomSnapshot {
   const players = [
     player("p1", "Ana", 0, true),
     player("p2", "Beto", 1, false),
     player("p3", "Cris", 2, false),
   ];
-  const gameState: GameState = {
+  const gameState: PublicGameState = {
     phase: "bidding",
     settings: {
       deckType: "spanish",

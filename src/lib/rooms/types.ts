@@ -1,4 +1,4 @@
-import type { GamePlayer, GameSettings, GameState, RoomStatus } from "@/lib/game/types";
+import type { GamePlayer, GameSettings, GameState, PublicGameState, RoomStatus } from "@/lib/game/types";
 
 export type RoomRecord = {
   id: string;
@@ -28,6 +28,11 @@ export type RoomEventRecord = {
 
 export type RoomSnapshot = {
   room: RoomRecord & { gameState: GameState };
+  players: PlayerRecord[];
+};
+
+export type PublicRoomSnapshot = {
+  room: Omit<RoomRecord, "gameState"> & { gameState: PublicGameState };
   players: PlayerRecord[];
 };
 

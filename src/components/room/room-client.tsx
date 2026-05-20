@@ -5,8 +5,9 @@ import Link from "next/link";
 import { Copy, Crown, Loader2, Play, RotateCcw, Swords } from "lucide-react";
 import { createBrowserSupabase } from "@/lib/supabase/client";
 import { getBuruStatus } from "@/lib/game/engine";
-import type { GameState, HiddenCard } from "@/lib/game/types";
-import type { PlayerRecord, RoomSnapshot } from "@/lib/rooms/types";
+import { playUiSound, type UiSound } from "@/lib/sound/ui-sounds";
+import type { PublicGameState } from "@/lib/game/types";
+import type { PlayerRecord, PublicRoomSnapshot } from "@/lib/rooms/types";
 import { cn } from "@/lib/utils";
 import { CardView } from "./card-view";
 
@@ -14,12 +15,8 @@ type Props = {
   code: string;
 };
 
-type PublicGameState = Omit<GameState, "hands"> & {
-  hands: Record<string, HiddenCard[]>;
-};
-
 export function RoomClient({ code }: Props) {
-  const [snapshot, setSnapshot] = useState<RoomSnapshot | null>(null);
+  const [snapshot, setSnapshot] = useState<PublicRoomSnapshot | null>(null);
   const [playerId, setPlayerId] = useState<string>("");
   const [playerToken, setPlayerToken] = useState<string>("");
   const [joinName, setJoinName] = useState("");
@@ -62,6 +59,7 @@ export function RoomClient({ code }: Props) {
   }, [load, snapshot?.room.id]);
 
   async function joinRoom() {
+    playUiSound("confirm");
     await api(`/api/rooms/${code}/join`, { name: joinName }, (data) => {
       if (!data.player) {
         setError("La respuesta no incluyo jugador.");
@@ -77,22 +75,25 @@ export function RoomClient({ code }: Props) {
   }
 
   async function patchSettings(settings: Record<string, unknown>) {
+    playUiSound("select");
     await api(`/api/rooms/${code}/settings`, { playerId, playerToken, settings }, setSnapshot, "PATCH");
   }
 
   async function startGame() {
+    playUiSound("confirm");
     await api(`/api/rooms/${code}/start`, { playerId, playerToken }, setSnapshot);
   }
 
-  async function action(body: Record<string, unknown>) {
+  async function action(body: Record<string, unknown>, sound: UiSound = "tap") {
     if (!snapshot) return;
+    playUiSound(sound);
     await api(`/api/rooms/${code}/action`, { playerId, playerToken, version: snapshot.room.version, ...body }, setSnapshot);
   }
 
   async function api(
     path: string,
     body: unknown,
-    onSuccess: (data: RoomSnapshot & { player?: PlayerRecord; playerToken?: string }) => void,
+    onSuccess: (data: PublicRoomSnapshot & { player?: PlayerRecord; playerToken?: string }) => void,
     method = "POST",
   ) {
     setError("");
@@ -103,6 +104,7 @@ export function RoomClient({ code }: Props) {
     });
     const data = await response.json();
     if (!response.ok) {
+      playUiSound("error");
       setError(data.error ?? "Operacion rechazada.");
       return;
     }
@@ -147,7 +149,10 @@ function Shell({ code, error, children }: { code: string; error?: string; childr
           </div>
           <button
             type="button"
-            onClick={() => navigator.clipboard?.writeText(window.location.href)}
+            onClick={() => {
+              playUiSound("tap");
+              void navigator.clipboard?.writeText(window.location.href);
+            }}
             className="flex h-11 items-center gap-2 rounded-[6px] border-2 border-ink bg-bone px-3 font-display font-black text-ink shadow-card"
           >
             <Copy size={18} />
@@ -187,7 +192,7 @@ function Lobby({
   onSettings,
   onStart,
 }: {
-  snapshot: RoomSnapshot;
+  snapshot: PublicRoomSnapshot;
   playerId: string;
   onSettings: (settings: Record<string, unknown>) => void;
   onStart: () => void;
@@ -295,11 +300,11 @@ export function GameTable({
   playerId,
   onAction,
 }: {
-  snapshot: RoomSnapshot;
+  snapshot: PublicRoomSnapshot;
   playerId: string;
-  onAction: (body: Record<string, unknown>) => void;
+  onAction: (body: Record<string, unknown>, sound?: UiSound) => void;
 }) {
-  const state = snapshot.room.gameState as unknown as PublicGameState;
+  const state = snapshot.room.gameState;
   const myHand = state.hands?.[playerId] ?? [];
   const isMyTurn = state.currentTurnPlayerId === playerId;
   const phase = state.phase;
@@ -367,7 +372,7 @@ export function GameTable({
                 <button
                   key={bid}
                   disabled={!isMyTurn}
-                  onClick={() => onAction({ type: "place_bid", bid })}
+                  onClick={() => onAction({ type: "place_bid", bid }, "select")}
                   className="h-11 min-w-11 rounded-[6px] border-2 border-ink bg-gold px-3 font-display font-black shadow-card disabled:opacity-45"
                 >
                   {bid}
@@ -384,7 +389,7 @@ export function GameTable({
                   key={card.id}
                   card={card}
                   playable={isMyTurn && !card.hidden}
-                  onClick={isMyTurn && !card.hidden ? () => onAction({ type: "play_card", cardId: card.id }) : undefined}
+                  onClick={isMyTurn && !card.hidden ? () => onAction({ type: "play_card", cardId: card.id }, "card") : undefined}
                 />
               ))}
             </div>
@@ -452,6 +457,7 @@ function ResultPanel({
         {winner ? (
           <Link
             href="/"
+            onClick={() => playUiSound("confirm")}
             className="flex h-11 items-center gap-2 rounded-[6px] border-2 border-ink bg-gold px-3 font-display font-black shadow-card"
           >
             Nueva sala
