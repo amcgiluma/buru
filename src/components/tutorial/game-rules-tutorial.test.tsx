@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { GameRulesTutorial } from "./game-rules-tutorial";
 
@@ -11,7 +11,8 @@ describe("GameRulesTutorial", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Siguiente escena" }));
     expect(screen.getByText("Elige tu apuesta")).toBeInTheDocument();
-    expect(screen.getByRole("img", { name: "A hearts" })).toBeInTheDocument();
+    expect(within(screen.getByRole("img", { name: "A hearts" })).getByText("\u2665")).toBeInTheDocument();
+    expect(screen.queryByText("heart")).not.toBeInTheDocument();
     expect(screen.getByText("La suma no puede quedar en 5")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Siguiente escena" }));

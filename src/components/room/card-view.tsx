@@ -1,7 +1,8 @@
 "use client";
 
-import { cn } from "@/lib/utils";
+import { SuitMark, isRedSuit } from "@/components/cards/suit-mark";
 import type { HiddenCard } from "@/lib/game/types";
+import { cn } from "@/lib/utils";
 
 type Props = {
   card: HiddenCard;
@@ -13,7 +14,7 @@ type Props = {
 };
 
 export function CardView({ card, playable, selected, winner, compact, onClick }: Props) {
-  const red = card.suit === "hearts" || card.suit === "diamonds" || card.suit === "copas" || card.suit === "oros";
+  const red = isRedSuit(card.suit);
 
   return (
     <button
@@ -36,9 +37,7 @@ export function CardView({ card, playable, selected, winner, compact, onClick }:
       ) : (
         <>
           <span className={cn("absolute left-2 top-1", red ? "text-ember" : "text-ink")}>{card.rank}</span>
-          <span className={cn("text-center text-[0.7em] uppercase", red ? "text-ember" : "text-ink")}>
-            {suitSymbol(card.suit)}
-          </span>
+          <SuitMark suit={card.suit} className={cn("text-center text-[0.7em]", red ? "text-ember" : "text-ink")} />
           <span className={cn("absolute bottom-1 right-2 rotate-180", red ? "text-ember" : "text-ink")}>
             {card.rank}
           </span>
@@ -46,16 +45,4 @@ export function CardView({ card, playable, selected, winner, compact, onClick }:
       )}
     </button>
   );
-}
-
-function suitSymbol(suit?: string) {
-  if (suit === "hearts") return "♥";
-  if (suit === "diamonds") return "♦";
-  if (suit === "clubs") return "♣";
-  if (suit === "spades") return "♠";
-  if (suit === "oros") return "oro";
-  if (suit === "copas") return "copa";
-  if (suit === "espadas") return "esp";
-  if (suit === "bastos") return "bas";
-  return "";
 }

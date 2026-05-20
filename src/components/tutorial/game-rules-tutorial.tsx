@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { ChevronLeft, ChevronRight, Trophy, X } from "lucide-react";
+import { SuitMark, isRedSuit } from "@/components/cards/suit-mark";
 import { playUiSound } from "@/lib/sound/ui-sounds";
 import { cn } from "@/lib/utils";
 
@@ -400,7 +401,7 @@ function VisualRule({ title, children }: { title: string; children: ReactNode })
 }
 
 function TutorialCard({ card, compact }: { card: MiniCard; compact?: boolean }) {
-  const red = card.suit === "hearts" || card.suit === "diamonds";
+  const red = isRedSuit(card.suit);
 
   return (
     <div
@@ -412,7 +413,7 @@ function TutorialCard({ card, compact }: { card: MiniCard; compact?: boolean }) 
       )}
     >
       <span className={cn("absolute left-2 top-1", red ? "text-ember" : "text-ink")}>{card.rank}</span>
-      <span className={cn("text-center text-[0.78em] uppercase", red ? "text-ember" : "text-ink")}>{suitSymbol(card.suit)}</span>
+      <SuitMark suit={card.suit} className={cn("text-center text-[0.78em]", red ? "text-ember" : "text-ink")} />
       <span className={cn("absolute bottom-1 right-2 rotate-180", red ? "text-ember" : "text-ink")}>{card.rank}</span>
     </div>
   );
@@ -466,11 +467,4 @@ function Counter({ label, value, compact }: { label: string; value: number; comp
       <span className={cn("font-display font-black", compact ? "text-xl" : "text-4xl")}>{value}</span>
     </div>
   );
-}
-
-function suitSymbol(suit: MiniCard["suit"]) {
-  if (suit === "hearts") return "heart";
-  if (suit === "diamonds") return "diam";
-  if (suit === "clubs") return "club";
-  return "spade";
 }

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 360" role="img" aria-label="Espadas">
+  <path d="M60 10 83 70 70 282 60 346 50 282 37 70Z" fill="#d8d8d8" stroke="#221a14" stroke-width="8" stroke-linejoin="round"/>
+  <path d="M60 28 69 72 61 276" fill="none" stroke="#ffffff" stroke-width="5" stroke-linecap="round" opacity=".75"/>
+  <path d="M26 285h68l-11 24H37Z" fill="#d39b28" stroke="#221a14" stroke-width="8" stroke-linejoin="round"/>
+  <path d="M44 314h32v31H44Z" fill="#7a4222" stroke="#221a14" stroke-width="8" stroke-linejoin="round"/>
+  <path d="M32 345h56" stroke="#221a14" stroke-width="10" stroke-linecap="round"/>
+</svg>
