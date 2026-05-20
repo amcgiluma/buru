@@ -3,6 +3,19 @@ import { describe, expect, it, vi } from "vitest";
 import { GameRulesTutorial } from "./game-rules-tutorial";
 
 describe("GameRulesTutorial", () => {
+  it("calculates tutorial player badges from the selected life mode", async () => {
+    render(<GameRulesTutorial open onClose={vi.fn()} />);
+
+    expect(screen.getByRole("button", { name: "Modo extremo" })).toBeInTheDocument();
+    expect(screen.getByTestId("tutorial-badge-Beto")).toHaveTextContent("BU");
+    expect(screen.getByTestId("tutorial-badge-Cris")).toHaveTextContent("B");
+
+    fireEvent.click(screen.getByRole("button", { name: "Modo normal" }));
+
+    expect(screen.getByTestId("tutorial-badge-Beto")).toHaveTextContent("B");
+    expect(screen.getByTestId("tutorial-badge-Cris")).toHaveTextContent("B");
+  });
+
   it("walks through the visual scenes using a french deck by default", async () => {
     render(<GameRulesTutorial open onClose={vi.fn()} />);
 
@@ -35,7 +48,7 @@ describe("GameRulesTutorial", () => {
     expect(screen.getByText("Lete: gana la segunda carta empatada")).toBeInTheDocument();
   });
 
-  it("shows win and loss outcomes in the result scene", async () => {
+  it("shows normal and extreme loss outcomes in the result scene", async () => {
     render(<GameRulesTutorial open onClose={vi.fn()} />);
 
     for (let step = 0; step < 5; step += 1) {
@@ -43,7 +56,13 @@ describe("GameRulesTutorial", () => {
     }
 
     expect(screen.getByText("Exacto: no pierdes vida")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Gane 3" }));
+    expect(screen.getByText("Modo extremo: pierdes 1 letra")).toBeInTheDocument();
+
     fireEvent.click(screen.getByRole("button", { name: "Gane 1" }));
-    expect(screen.getByText("Fallaste: pierdes una letra")).toBeInTheDocument();
+    expect(screen.getByText("Modo extremo: pierdes 1 letra")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Modo normal" }));
+    expect(screen.getByText("Modo normal: pierdes 1 letra")).toBeInTheDocument();
   });
 });

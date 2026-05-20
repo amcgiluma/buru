@@ -16,6 +16,8 @@ type MiniCard = {
   suit: "hearts" | "diamonds" | "clubs" | "spades";
 };
 
+type TutorialLifeMode = "normal" | "extreme";
+
 const scenes = ["Objetivo", "Apuesta", "Baza", "Manos", "Empates", "Resultado"];
 const handPattern = [5, 4, 3, 2, 1, 2, 3, 4, 5];
 
@@ -25,6 +27,7 @@ export function GameRulesTutorial({ open, onClose }: Props) {
   const [handStep, setHandStep] = useState(0);
   const [tieRule, setTieRule] = useState<"diego" | "lete">("diego");
   const [won, setWon] = useState(2);
+  const [lifeMode, setLifeMode] = useState<TutorialLifeMode>("extreme");
 
   useEffect(() => {
     if (!open) return;
@@ -41,13 +44,13 @@ export function GameRulesTutorial({ open, onClose }: Props) {
   }, [onClose, open]);
 
   const body = useMemo(() => {
-    if (scene === 0) return <GoalScene />;
+    if (scene === 0) return <GoalScene lifeMode={lifeMode} onLifeMode={setLifeMode} />;
     if (scene === 1) return <BidScene bid={bid} onBid={setBid} />;
     if (scene === 2) return <TrickScene />;
     if (scene === 3) return <HandPatternScene step={handStep} onStep={setHandStep} />;
     if (scene === 4) return <TieScene rule={tieRule} onRule={setTieRule} />;
-    return <ResultScene won={won} onWon={setWon} />;
-  }, [bid, handStep, scene, tieRule, won]);
+    return <ResultScene won={won} onWon={setWon} lifeMode={lifeMode} onLifeMode={setLifeMode} />;
+  }, [bid, handStep, lifeMode, scene, tieRule, won]);
 
   if (!open) return null;
 
@@ -152,20 +155,25 @@ export function GameRulesTutorial({ open, onClose }: Props) {
   );
 }
 
-function GoalScene() {
+function GoalScene({ lifeMode, onLifeMode }: { lifeMode: TutorialLifeMode; onLifeMode: (mode: TutorialLifeMode) => void }) {
   return (
     <SceneFrame title="Acierta tus bazas" caption="Predice, juega y conserva vidas. Si fallas, vas juntando BURU.">
       <div className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
         <div className="grid min-h-72 place-items-center rounded-[8px] border-2 border-ink bg-felt p-4">
           <div className="flex flex-wrap items-end justify-center gap-4">
-            <PlayerStack name="Ana" bid={2} won={2} badge="OK" tone="safe" />
-            <PlayerStack name="Beto" bid={1} won={3} badge="B" tone="hurt" />
-            <PlayerStack name="Cris" bid={0} won={1} badge="BU" tone="hurt" />
+            <PlayerStack name="Ana" bid={2} won={2} badge={penaltyBadge(2, 2, lifeMode)} tone="safe" />
+            <PlayerStack name="Beto" bid={1} won={3} badge={penaltyBadge(1, 3, lifeMode)} tone="hurt" />
+            <PlayerStack name="Cris" bid={0} won={1} badge={penaltyBadge(0, 1, lifeMode)} tone="hurt" />
           </div>
         </div>
         <VisualRule title="Objetivo">
+          <LifeModeSwitch lifeMode={lifeMode} onLifeMode={onLifeMode} />
           <MiniFormula left="Dices 2" middle="Ganas 2" result="sigues vivo" good />
-          <MiniFormula left="Dices 1" middle="Ganas 3" result="pierdes letra" />
+          <MiniFormula
+            left="Dices 1"
+            middle="Ganas 3"
+            result={lifeMode === "extreme" ? "pierdes BU" : "pierdes B"}
+          />
         </VisualRule>
       </div>
     </SceneFrame>
@@ -317,8 +325,19 @@ function TieScene({ rule, onRule }: { rule: "diego" | "lete"; onRule: (rule: "di
   );
 }
 
-function ResultScene({ won, onWon }: { won: number; onWon: (won: number) => void }) {
+function ResultScene({
+  won,
+  onWon,
+  lifeMode,
+  onLifeMode,
+}: {
+  won: number;
+  onWon: (won: number) => void;
+  lifeMode: TutorialLifeMode;
+  onLifeMode: (mode: TutorialLifeMode) => void;
+}) {
   const exact = won === 2;
+  const loss = penaltyAmount(2, won, lifeMode);
 
   return (
     <SceneFrame title="Compara lo que dijiste con lo que ganaste" caption="Acertar exacto te salva. Fallar te acerca a BURU.">
@@ -349,8 +368,11 @@ function ResultScene({ won, onWon }: { won: number; onWon: (won: number) => void
           </div>
         </div>
         <VisualRule title="Resultado">
+          <LifeModeSwitch lifeMode={lifeMode} onLifeMode={onLifeMode} />
           <p className={cn("rounded-[6px] border-2 border-ink p-4 font-display text-xl font-black", exact ? "bg-mint text-ink" : "bg-ember text-bone")}>
-            {exact ? "Exacto: no pierdes vida" : "Fallaste: pierdes una letra"}
+            {exact
+              ? "Exacto: no pierdes vida"
+              : `${lifeMode === "extreme" ? "Modo extremo" : "Modo normal"}: pierdes ${loss} ${loss === 1 ? "letra" : "letras"}`}
           </p>
           <div className="flex gap-2">
             {["B", "U", "R", "U"].map((letter, index) => (
@@ -358,7 +380,7 @@ function ResultScene({ won, onWon }: { won: number; onWon: (won: number) => void
                 key={`${letter}-${index}`}
                 className={cn(
                   "grid h-11 w-11 place-items-center rounded-[6px] border-2 border-ink font-display font-black shadow-card",
-                  !exact && index === 0 ? "bg-ember text-bone" : "bg-white text-ink",
+                  index < loss ? "bg-ember text-bone" : "bg-white text-ink",
                 )}
               >
                 {letter}
@@ -369,6 +391,50 @@ function ResultScene({ won, onWon }: { won: number; onWon: (won: number) => void
       </div>
     </SceneFrame>
   );
+}
+
+function LifeModeSwitch({
+  lifeMode,
+  onLifeMode,
+}: {
+  lifeMode: TutorialLifeMode;
+  onLifeMode: (mode: TutorialLifeMode) => void;
+}) {
+  return (
+    <div className="flex flex-wrap gap-2" aria-label="Modo de vidas">
+      {([
+        ["extreme", "Modo extremo"],
+        ["normal", "Modo normal"],
+      ] as const).map(([mode, label]) => (
+        <button
+          key={mode}
+          type="button"
+          onClick={() => {
+            playUiSound("select");
+            onLifeMode(mode);
+          }}
+          className={cn(
+            "h-10 rounded-[6px] border-2 border-ink px-3 font-display text-xs font-black shadow-card transition-transform hover:-translate-y-0.5",
+            lifeMode === mode ? "bg-mint text-ink" : "bg-white text-ink",
+          )}
+        >
+          {label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function penaltyAmount(bid: number, won: number, lifeMode: TutorialLifeMode) {
+  const difference = Math.abs(won - bid);
+  if (difference === 0) return 0;
+  return lifeMode === "normal" ? 1 : Math.min(4, difference);
+}
+
+function penaltyBadge(bid: number, won: number, lifeMode: TutorialLifeMode) {
+  const loss = penaltyAmount(bid, won, lifeMode);
+  if (loss === 0) return "OK";
+  return "BURU".slice(0, loss);
 }
 
 const sampleCards: MiniCard[] = [
@@ -440,7 +506,10 @@ function PlayerStack({ name, bid, won, badge, tone }: { name: string; bid: numbe
         <Counter label="Dijo" value={bid} compact />
         <Counter label="Gano" value={won} compact />
       </div>
-      <span className={cn("rounded-[4px] border-2 border-ink px-2 py-1 text-center font-display font-black", tone === "safe" ? "bg-gold" : "bg-ember text-bone")}>
+      <span
+        data-testid={`tutorial-badge-${name}`}
+        className={cn("rounded-[4px] border-2 border-ink px-2 py-1 text-center font-display font-black", tone === "safe" ? "bg-gold" : "bg-ember text-bone")}
+      >
         {badge}
       </span>
     </div>
