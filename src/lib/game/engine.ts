@@ -206,7 +206,11 @@ export function startNextHand(state: GameState, seed = Date.now().toString()): G
   const handSize = getNextHandSize(handIndex);
   const deck = shuffleDeck(buildDeck(state.settings.deckType), seed);
   const dealt = dealHand(activePlayers, deck, handSize);
-  const dealer = activePlayers[(handIndex + state.dealerSeat) % activePlayers.length] ?? activePlayers[0];
+  const previousDealerIndex = activePlayers.findIndex((player) => player.seat === state.dealerSeat);
+  const dealer =
+    previousDealerIndex === -1
+      ? activePlayers.find((player) => player.seat > state.dealerSeat) ?? activePlayers[0]
+      : activePlayers[(previousDealerIndex + 1) % activePlayers.length] ?? activePlayers[0];
 
   return {
     ...state,
@@ -346,10 +350,18 @@ export function continueTrick(state: GameState): GameState {
 }
 
 export function hidePrivateState(state: GameState, viewerPlayerId: string): PublicGameState {
+  const isOneCardVisibilityPhase =
+    state.handSize === 1 && (state.phase === "bidding" || state.phase === "playing");
+
   const hands = Object.fromEntries(
     Object.entries(state.hands).map(([playerId, hand]) => [
       playerId,
       hand.map((card) => {
+        if (isOneCardVisibilityPhase) {
+          if (playerId === viewerPlayerId) return { id: card.id, hidden: true };
+          return card;
+        }
+
         if (playerId !== viewerPlayerId) {
           return { id: card.id, hidden: true };
         }

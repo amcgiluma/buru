@@ -10,10 +10,11 @@ type Props = {
   selected?: boolean;
   winner?: boolean;
   compact?: boolean;
+  ariaLabel?: string;
   onClick?: () => void;
 };
 
-export function CardView({ card, playable, selected, winner, compact, onClick }: Props) {
+export function CardView({ card, playable, selected, winner, compact, ariaLabel, onClick }: Props) {
   const red = isRedSuit(card.suit);
 
   return (
@@ -30,7 +31,7 @@ export function CardView({ card, playable, selected, winner, compact, onClick }:
         winner && "ring-4 ring-gold",
         onClick && "cursor-pointer hover:-translate-y-2 active:-translate-y-1",
       )}
-      aria-label={card.hidden ? "Carta oculta" : `${card.rank} ${card.suit}`}
+      aria-label={ariaLabel ?? (card.hidden ? "Carta oculta" : `${card.rank} ${card.suit}`)}
     >
       {card.hidden ? (
         <span>BU</span>

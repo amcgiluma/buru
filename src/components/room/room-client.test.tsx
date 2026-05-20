@@ -36,6 +36,27 @@ describe("GameTable", () => {
     fireEvent.click(screen.getByRole("button", { name: "1" }));
     expect(onAction).toHaveBeenCalledWith({ type: "place_bid", bid: 1 }, "select");
   });
+
+  it("shows opponents cards but keeps the viewer card hidden in a one-card bidding hand", () => {
+    render(<GameTable snapshot={oneCardBiddingSnapshot()} playerId="p1" onAction={vi.fn()} />);
+
+    expect(screen.getByText("Carta unica")).toBeInTheDocument();
+    expect(screen.getByText("Tu carta esta oculta")).toBeInTheDocument();
+    expect(screen.getByLabelText("7 copas")).toBeInTheDocument();
+    expect(screen.getByLabelText("3 espadas")).toBeInTheDocument();
+    expect(screen.getAllByText("Beto").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Cris").length).toBeGreaterThan(0);
+    expect(screen.queryByLabelText("12 oros")).not.toBeInTheDocument();
+  });
+
+  it("lets the viewer play their hidden card during a one-card playing hand", () => {
+    const onAction = vi.fn();
+    render(<GameTable snapshot={oneCardPlayingSnapshot()} playerId="p1" onAction={onAction} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Jugar carta oculta" }));
+
+    expect(onAction).toHaveBeenCalledWith({ type: "play_card", cardId: "spanish-oros-12" }, "card");
+  });
 });
 
 function biddingSnapshot(): PublicRoomSnapshot {
@@ -192,6 +213,106 @@ function lastBidderSnapshot(): PublicRoomSnapshot {
       settings: gameState.settings,
       gameState,
       version: 3,
+      createdAt: "2026-05-20T00:00:00.000Z",
+      updatedAt: "2026-05-20T00:00:00.000Z",
+    },
+    players,
+  };
+}
+
+function oneCardBiddingSnapshot(): PublicRoomSnapshot {
+  const players = [
+    player("p1", "Ana", 0, true),
+    player("p2", "Beto", 1, false),
+    player("p3", "Cris", 2, false),
+  ];
+  const gameState: PublicGameState = {
+    phase: "bidding",
+    settings: {
+      deckType: "spanish",
+      lifeMode: "normal",
+      tieRule: "diego",
+      initialLives: 4,
+      minPlayers: 3,
+      maxPlayers: 6,
+    },
+    players,
+    dealerSeat: 1,
+    leaderPlayerId: "p2",
+    currentTurnPlayerId: "p1",
+    handIndex: 4,
+    handSize: 1,
+    deck: [],
+    hands: {
+      p1: [{ id: "spanish-oros-12", hidden: true }],
+      p2: [card("copas", "7", 6)],
+      p3: [card("espadas", "3", 2)],
+    },
+    bids: {},
+    tricksWon: { p1: 0, p2: 0, p3: 0 },
+    currentTrick: [],
+    completedTricks: [],
+    losses: {},
+  };
+
+  return {
+    room: {
+      id: "room-1",
+      code: "ABCDE",
+      status: "bidding",
+      settings: gameState.settings,
+      gameState,
+      version: 9,
+      createdAt: "2026-05-20T00:00:00.000Z",
+      updatedAt: "2026-05-20T00:00:00.000Z",
+    },
+    players,
+  };
+}
+
+function oneCardPlayingSnapshot(): PublicRoomSnapshot {
+  const players = [
+    player("p1", "Ana", 0, true),
+    player("p2", "Beto", 1, false),
+    player("p3", "Cris", 2, false),
+  ];
+  const gameState: PublicGameState = {
+    phase: "playing",
+    settings: {
+      deckType: "spanish",
+      lifeMode: "normal",
+      tieRule: "diego",
+      initialLives: 4,
+      minPlayers: 3,
+      maxPlayers: 6,
+    },
+    players,
+    dealerSeat: 1,
+    leaderPlayerId: "p2",
+    currentTurnPlayerId: "p1",
+    handIndex: 4,
+    handSize: 1,
+    deck: [],
+    hands: {
+      p1: [{ id: "spanish-oros-12", hidden: true }],
+      p2: [card("copas", "7", 6)],
+      p3: [card("espadas", "3", 2)],
+    },
+    bids: { p1: 0, p2: 1, p3: 0 },
+    tricksWon: { p1: 0, p2: 0, p3: 0 },
+    currentTrick: [],
+    completedTricks: [],
+    losses: {},
+  };
+
+  return {
+    room: {
+      id: "room-1",
+      code: "ABCDE",
+      status: "playing",
+      settings: gameState.settings,
+      gameState,
+      version: 10,
       createdAt: "2026-05-20T00:00:00.000Z",
       updatedAt: "2026-05-20T00:00:00.000Z",
     },

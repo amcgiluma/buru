@@ -315,6 +315,17 @@ export function GameTable({
   const trickWinner = trickWinnerId ? snapshot.players.find((player) => player.id === trickWinnerId) : null;
   const trickWinnerBid = trickWinnerId ? state.bids?.[trickWinnerId] : undefined;
   const trickWinnerWon = trickWinnerId ? state.tricksWon?.[trickWinnerId] ?? 0 : 0;
+  const isOneCardHand = state.handSize === 1 && (phase === "bidding" || phase === "playing");
+  const visibleOpponentCards = isOneCardHand
+    ? snapshot.players
+        .filter((player) => player.id !== playerId)
+        .map((player) => ({ player, card: state.hands?.[player.id]?.[0] }))
+        .filter(
+          (entry): entry is { player: PlayerRecord; card: PublicGameState["hands"][string][number] } =>
+            Boolean(entry.card && !entry.card.hidden),
+        )
+    : [];
+  const myHiddenOneCard = isOneCardHand ? myHand[0] : undefined;
 
   const bidOptions = useMemo(() => Array.from({ length: state.handSize + 1 }, (_, value) => value), [state.handSize]);
   const bidBlock = useMemo(() => getForbiddenBid(state, playerId), [playerId, state]);
@@ -405,6 +416,9 @@ export function GameTable({
                 <p className="mt-1 text-sm font-bold">{visibleBidWarning}</p>
               </div>
             ) : null}
+            {isOneCardHand ? (
+              <OneCardVisibilityPanel opponents={visibleOpponentCards} myCard={myHiddenOneCard} />
+            ) : null}
             <div className="mb-3 flex gap-2 overflow-x-auto px-1 pb-3 pt-3">
               {myHand.map((card) => (
                 <CardView key={card.id} card={card} />
@@ -448,21 +462,61 @@ export function GameTable({
         ) : (
           <div className="rounded-[8px] border-2 border-ink bg-bone p-3 text-ink shadow-card">
             <p className="mb-2 font-display font-black">{isMyTurn ? "Tu carta" : "Esperando turno"}</p>
+            {isOneCardHand ? (
+              <OneCardVisibilityPanel opponents={visibleOpponentCards} myCard={myHiddenOneCard} />
+            ) : null}
             <div className="flex gap-2 overflow-x-auto px-1 pb-3 pt-3">
-              {myHand.map((card) => (
-                <CardView
-                  key={card.id}
-                  card={card}
-                  playable={isMyTurn && !card.hidden}
-                  onClick={isMyTurn && !card.hidden ? () => onAction({ type: "play_card", cardId: card.id }, "card") : undefined}
-                />
-              ))}
+              {myHand.map((card) => {
+                const canPlayCard = isMyTurn && (!card.hidden || isOneCardHand);
+                const playLabel = card.hidden && isOneCardHand ? "Jugar carta oculta" : undefined;
+
+                return (
+                  <CardView
+                    key={card.id}
+                    card={card}
+                    playable={canPlayCard}
+                    ariaLabel={playLabel}
+                    onClick={canPlayCard ? () => onAction({ type: "play_card", cardId: card.id }, "card") : undefined}
+                  />
+                );
+              })}
             </div>
           </div>
         )}
 
       </div>
     </section>
+  );
+}
+
+function OneCardVisibilityPanel({
+  opponents,
+  myCard,
+}: {
+  opponents: { player: PlayerRecord; card: PublicGameState["hands"][string][number] }[];
+  myCard?: PublicGameState["hands"][string][number];
+}) {
+  return (
+    <div className="mb-3 rounded-[8px] border-2 border-ink bg-petrol/85 p-3 text-bone">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <p className="font-display text-sm font-black uppercase text-signal">Carta unica</p>
+        {myCard?.hidden ? (
+          <span className="rounded-[4px] border-2 border-ink bg-ember px-2 py-1 text-xs font-black text-bone">
+            Tu carta esta oculta
+          </span>
+        ) : null}
+      </div>
+      <div className="flex gap-3 overflow-x-auto px-1 pb-2 pt-1">
+        {opponents.map(({ player, card }) => (
+          <div key={player.id} className="grid min-w-24 justify-items-center gap-1">
+            <CardView card={card} compact />
+            <span className="max-w-24 truncate rounded-[4px] bg-ink px-2 py-1 text-xs font-bold text-bone">
+              {player.name}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
 

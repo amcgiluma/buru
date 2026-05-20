@@ -10,6 +10,7 @@ import {
   playCard,
   resolveHand,
   resolveTrick,
+  startNextHand,
   validateBid,
 } from "./engine";
 import type { Card, GamePlayer } from "./types";
@@ -135,7 +136,7 @@ describe("BURU engine", () => {
     expect(winner.playerId).toBe("p2");
   });
 
-  it("shows the owner cards while bidding, including one-card rounds", () => {
+  it("hides the viewer card and reveals opponent cards while bidding a one-card hand", () => {
     const state = createInitialGameState(players, {
       deckType: "spanish",
       lifeMode: "normal",
@@ -148,17 +149,21 @@ describe("BURU engine", () => {
       ...state,
       handSize: 1,
       phase: "bidding" as const,
-      hands: { p1: [card("spanish", "oros", "1")], p2: [card("spanish", "copas", "2")], p3: [] },
+      hands: {
+        p1: [card("spanish", "oros", "1")],
+        p2: [card("spanish", "copas", "2")],
+        p3: [card("spanish", "espadas", "3")],
+      },
     };
 
-    const hiddenForOwner = hidePrivateState(oneCardState, "p1");
-    const hiddenForOther = hidePrivateState(oneCardState, "p2");
+    const publicForP1 = hidePrivateState(oneCardState, "p1");
 
-    expect(hiddenForOwner.hands.p1[0].rank).toBe("1");
-    expect(hiddenForOther.hands.p1[0].hidden).toBe(true);
+    expect(publicForP1.hands.p1[0]).toEqual({ id: "spanish-oros-1", hidden: true });
+    expect(publicForP1.hands.p2[0].rank).toBe("2");
+    expect(publicForP1.hands.p3[0].rank).toBe("3");
   });
 
-  it("shows the owner card during one-card play", () => {
+  it("hides the viewer card and reveals opponent cards while playing a one-card hand", () => {
     const state = createInitialGameState(players, {
       deckType: "spanish",
       lifeMode: "normal",
@@ -171,11 +176,18 @@ describe("BURU engine", () => {
       ...state,
       handSize: 1,
       phase: "playing" as const,
-      hands: { p1: [card("spanish", "oros", "1")], p2: [card("spanish", "copas", "2")], p3: [] },
+      hands: {
+        p1: [card("spanish", "oros", "1")],
+        p2: [card("spanish", "copas", "2")],
+        p3: [card("spanish", "espadas", "3")],
+      },
     };
 
-    expect(hidePrivateState(oneCardState, "p1").hands.p1[0].rank).toBe("1");
-    expect(hidePrivateState(oneCardState, "p2").hands.p1[0].hidden).toBe(true);
+    const publicForP1 = hidePrivateState(oneCardState, "p1");
+
+    expect(publicForP1.hands.p1[0]).toEqual({ id: "spanish-oros-1", hidden: true });
+    expect(publicForP1.hands.p2[0].rank).toBe("2");
+    expect(publicForP1.hands.p3[0].rank).toBe("3");
   });
 
   it("maps lives to the persistent BURU status", () => {
@@ -247,6 +259,50 @@ describe("BURU engine", () => {
     expect(result.phase).toBe("hand_result");
     expect(result.currentTrick).toEqual([]);
     expect(result.losses.p1.phrase).toBe("B");
+  });
+
+  it("rotates the next hand starter one active player at a time", () => {
+    const initial = createInitialGameState(players, {
+      deckType: "spanish",
+      lifeMode: "normal",
+      tieRule: "diego",
+      initialLives: 4,
+      minPlayers: 3,
+      maxPlayers: 6,
+    });
+
+    const secondHand = startNextHand({ ...initial, phase: "hand_result" as const }, "hand-2");
+    const thirdHand = startNextHand({ ...secondHand, phase: "hand_result" as const }, "hand-3");
+    const fourthHand = startNextHand({ ...thirdHand, phase: "hand_result" as const }, "hand-4");
+
+    expect(initial.currentTurnPlayerId).toBe("p1");
+    expect(secondHand.currentTurnPlayerId).toBe("p2");
+    expect(thirdHand.currentTurnPlayerId).toBe("p3");
+    expect(fourthHand.currentTurnPlayerId).toBe("p1");
+  });
+
+  it("rotates to the next active seat when the previous dealer was eliminated", () => {
+    const state = createInitialGameState(players, {
+        deckType: "spanish",
+        lifeMode: "normal",
+        tieRule: "diego",
+        initialLives: 4,
+        minPlayers: 3,
+        maxPlayers: 6,
+      });
+    const stateAfterElimination = {
+      ...state,
+      players: state.players.map((player) =>
+        player.id === "p2" ? { ...player, lives: 0, status: "eliminated" as const } : player,
+      ),
+      dealerSeat: 1,
+      phase: "hand_result" as const,
+    };
+
+    const nextHand = startNextHand(stateAfterElimination, "after-elimination");
+
+    expect(nextHand.currentTurnPlayerId).toBe("p3");
+    expect(nextHand.dealerSeat).toBe(2);
   });
 });
 
