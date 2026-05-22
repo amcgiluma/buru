@@ -95,7 +95,7 @@ El estado completo de la partida vive en Supabase, pero la app expone al cliente
 
 ## Desarrollo con IA
 
-Esta aplicación fue desarrollada mediante un flujo de vibecoding guiado, combinando dirección humana con ejecución asistida por modelos de IA.
+Esta aplicación fue desarrollada mediante un flujo agentio guiado, combinando dirección humana con ejecución asistida por modelos de IA.
 
 El proceso se apoyó en:
 
